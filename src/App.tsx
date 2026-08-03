@@ -1,4 +1,5 @@
-import { BrowserRouter, Link } from 'react-router-dom';
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
+import Propose from './pages/Propose';
 
 function BrandMark() {
   return (
@@ -26,7 +27,22 @@ export default function App() {
         </div>
       </header>
       <main className="app-main">
-        <p className="muted">Loading…</p>
+        <Routes>
+          <Route path="/" element={<Propose />} />
+          <Route
+            path="*"
+            element={
+              <div className="not-found">
+                <div className="big">🧭</div>
+                <h1>Page not found</h1>
+                <p>That URL doesn’t match anything in this app.</p>
+                <Link className="btn btn-primary" to="/">
+                  Propose a transaction
+                </Link>
+              </div>
+            }
+          />
+        </Routes>
       </main>
     </BrowserRouter>
   );
