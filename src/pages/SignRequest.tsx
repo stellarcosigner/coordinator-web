@@ -63,6 +63,17 @@ export default function SignRequest() {
     }
   }, [id]);
 
+  // Refetch without flipping to the loading skeleton — used after connecting
+  // so the signer list / already-signed state reflects the network right now.
+  const silentRefresh = useCallback(async () => {
+    try {
+      const fresh = await getRequest(id);
+      setLoad({ kind: 'loaded', request: fresh });
+    } catch {
+      // Keep the current view on transient failure.
+    }
+  }, [id]);
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
@@ -101,6 +112,9 @@ export default function SignRequest() {
     try {
       const { publicKey } = await wallet.connect();
       setSign({ kind: 'connected', publicKey });
+      // The signer list is resolved live by the API; refresh it now that we
+      // know which account is connected.
+      void silentRefresh();
       if (request) {
         try {
           const passphrase = await wallet.getNetworkPassphrase();
@@ -217,6 +231,8 @@ export default function SignRequest() {
   }
 
   const { status, network, summary, signatureState } = request;
+  const submittedTxHash =
+    sign.kind === 'submitted' ? sign.txHash : txHashFromFragment;
   const connectedKey = sign.kind === 'connected' ? sign.publicKey : null;
   const connectedIsSigner = connectedKey
     ? signatureState.signers.some((signer) => signer.key === connectedKey)
@@ -244,18 +260,15 @@ export default function SignRequest() {
       {status === 'submitted' && (
         <div className="alert alert-success" role="alert">
           <strong>Threshold met. Transaction submitted to the network.</strong>{' '}
-          {txHashFromFragment || sign.kind === 'submitted' ? (
+          {submittedTxHash ? (
             <>
               View it on the block explorer:{' '}
               <a
-                href={blockExplorerTxUrl(
-                  network,
-                  sign.kind === 'submitted' ? sign.txHash : (txHashFromFragment as string),
-                )}
+                href={blockExplorerTxUrl(network, submittedTxHash)}
                 target="_blank"
                 rel="noreferrer"
               >
-                {shortenAddress(sign.kind === 'submitted' ? sign.txHash : (txHashFromFragment as string), 8, 8)}
+                {shortenAddress(submittedTxHash, 8, 8)}
               </a>
               .
             </>
