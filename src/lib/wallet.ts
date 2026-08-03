@@ -55,6 +55,8 @@ export interface WalletAdapter {
   connect(): Promise<{ publicKey: string }>;
   /** Silently returns the connected key if the app is already authorized, else null. */
   getConnectedPublicKey(): Promise<string | null>;
+  /** The network passphrase the wallet is currently configured for, or null. */
+  getNetworkPassphrase(): Promise<string | null>;
   /**
    * Signs a transaction envelope and extracts the wallet's detached signature
    * (the coordinator-api needs the bare signature, not the full envelope).
@@ -114,6 +116,17 @@ class FreighterWalletAdapter implements WalletAdapter {
       return null;
     }
     return result.address || null;
+  }
+
+  async getNetworkPassphrase(): Promise<string | null> {
+    if (!(await this.isInstalled())) {
+      return null;
+    }
+    const result = await freighter.getNetwork();
+    if (result.error) {
+      return null;
+    }
+    return result.networkPassphrase || null;
   }
 
   async signTransactionDetached(

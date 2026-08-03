@@ -1,5 +1,6 @@
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
 import Propose from './pages/Propose';
+import SignRequest from './pages/SignRequest';
 
 function BrandMark() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
       <main className="app-main">
         <Routes>
           <Route path="/" element={<Propose />} />
+          <Route path="/requests/:id" element={<SignRequest />} />
           <Route
             path="*"
             element={
