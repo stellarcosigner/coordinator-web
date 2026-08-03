@@ -130,6 +130,34 @@ describe('signTransactionDetached', () => {
     expect(signer.verify(transaction.hash(), signatureBytes)).toBe(true);
   });
 
+  it('rejects a wallet that signed a different transaction', async () => {
+    const signedXdr = buildSignedEnvelope();
+    // A second, different transaction — same signer, different destination.
+    const other = new TransactionBuilder(new Account(signer.publicKey(), '1234567890'), {
+      fee: '100',
+      networkPassphrase: TESTNET,
+    })
+      .addOperation(
+        Operation.payment({
+          destination: Keypair.random().publicKey(),
+          asset: Asset.native(),
+          amount: '999',
+        }),
+      )
+      .setTimeout(300)
+      .build();
+    other.sign(signer);
+
+    mocked.signTransaction.mockResolvedValue({
+      signedTxXdr: other.toXDR(),
+      signerAddress: signer.publicKey(),
+    });
+
+    await expect(
+      wallet.signTransactionDetached(signedXdr, { networkPassphrase: TESTNET }),
+    ).rejects.toThrow('different transaction');
+  });
+
   it('throws a WalletError when the signed envelope carries no signatures', async () => {
     // Build an unsigned envelope and pretend the wallet returned it.
     const unsigned = new TransactionBuilder(new Account(signer.publicKey(), '1234567890'), {

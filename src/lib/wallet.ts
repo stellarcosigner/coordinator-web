@@ -142,6 +142,31 @@ class FreighterWalletAdapter implements WalletAdapter {
     if (result.error) {
       throw new WalletSignRejectedError(result.error.message);
     }
+
+    // Defense in depth: the envelope the wallet returns must be the exact
+    // transaction we asked it to sign (the hash excludes signatures, so a
+    // signed envelope still hashes to the same value as the unsigned one).
+    // A wallet that signed something else would be rejected by the API with a
+    // cryptic 400; failing fast with a clear message is far kinder. The API
+    // would reject a bad signature anyway — this never accepts one.
+    try {
+      const requestedHash = TransactionBuilder.fromXDR(xdr, opts.networkPassphrase).hash();
+      const signedHash = TransactionBuilder.fromXDR(
+        result.signedTxXdr,
+        opts.networkPassphrase,
+      ).hash();
+      if (!requestedHash.equals(signedHash)) {
+        throw new WalletError(
+          'The wallet returned a signature for a different transaction. Cancel and try again.',
+        );
+      }
+    } catch (error) {
+      if (error instanceof WalletError) throw error;
+      throw new WalletError(
+        'Could not verify that the wallet signed this exact transaction. Try again.',
+      );
+    }
+
     const { signature, signedXdr } = extractNewestSignature(
       result.signedTxXdr,
       opts.networkPassphrase,
