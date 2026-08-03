@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 import { createRequest } from '../lib/api';
 import type { NetworkName, TransactionSummary as SummaryData } from '../lib/api';
 import { decodeEnvelope, InvalidTransactionError } from '../lib/txSummary';
@@ -61,7 +62,7 @@ export default function Propose() {
 
   const ttlSeconds = ttlDays.trim() === '' ? undefined : Math.round(Number(ttlDays) * DAYS_TO_SECONDS);
 
-  async function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitError(null);
     setCopied(false);
@@ -112,12 +113,26 @@ export default function Propose() {
     try {
       await navigator.clipboard.writeText(shareableUrl);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard API unavailable (e.g. insecure context): fall back to a
-      // selectable text field so the link can still be copied manually.
-      setCopied(false);
+      // Clipboard API unavailable (e.g. non-https origin): fall back to a
+      // hidden textarea + execCommand('copy').
+      const textarea = document.createElement('textarea');
+      textarea.value = shareableUrl;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+      } catch {
+        setCopied(false);
+      } finally {
+        document.body.removeChild(textarea);
+      }
     }
+    window.setTimeout(() => setCopied(false), 2000);
   }
 
   return (
