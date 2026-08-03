@@ -1,0 +1,2 @@
+/* Netlify: serve index.html for every path so the SPA router works. */
+/*    /index.html   200
