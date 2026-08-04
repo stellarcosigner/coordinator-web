@@ -226,7 +226,18 @@ plain-language sentences a signer will read. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for how to add coverage when you touch the
 decoder.
 
+## Contributors
+
+<a href="https://github.com/stellarcosigner/coordinator-web/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=stellarcosigner/coordinator-web" />
+</a>
+
 ## Related
 
 - [stellarcosigner/coordinator-api](https://github.com/stellarcosigner/coordinator-api) — the backend this app talks to (routes, security model, README).
 - [Freighter developer docs](https://docs.freighter.app/) — the wallet integration this app uses.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE), [CONTRIBUTING.md](CONTRIBUTING.md),
+and [SECURITY.md](SECURITY.md).
