@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/banner.svg" alt="Stellar Multisig Coordinator Web" width="850">
+</p>
+
 # Stellar Multisig Coordinator — Web
 
 [![CI](https://github.com/stellarcosigner/coordinator-web/actions/workflows/ci.yml/badge.svg)](https://github.com/stellarcosigner/coordinator-web/actions/workflows/ci.yml)

@@ -1,0 +1,183 @@
+<svg viewBox="0 0 850 320" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0F19" />
+      <stop offset="50%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#070A10" />
+    </linearGradient>
+
+    <!-- Accent Gradients -->
+    <linearGradient id="primary-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="50%" stop-color="#818CF8" />
+      <stop offset="100%" stop-color="#C084FC" />
+    </linearGradient>
+
+    <linearGradient id="purple-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#C084FC" stop-opacity="0" />
+    </linearGradient>
+
+    <linearGradient id="cyan-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#3B82F6" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Card Background Gradient -->
+    <linearGradient id="card-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#0F172A" stop-opacity="0.8" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="glow-filter" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="subtle-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Grid Pattern -->
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#1E293B" stroke-width="0.75" stroke-opacity="0.5" />
+      <circle cx="32" cy="32" r="1" fill="#334155" opacity="0.4" />
+    </pattern>
+  </defs>
+
+  <style>
+    .title { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 34px; }
+    .subtitle { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-weight: 400; font-size: 14px; fill: #94A3B8; }
+    .tag-text { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-weight: 700; font-size: 11px; fill: #38BDF8; letter-spacing: 1.2px; }
+    .badge-text { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-weight: 600; font-size: 12px; fill: #CBD5E1; }
+    .node-text { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-weight: 700; font-size: 11px; }
+  </style>
+
+  <!-- Base Canvas -->
+  <rect width="850" height="320" rx="16" fill="url(#bg-grad)" stroke="#1E293B" stroke-width="1.5" />
+
+  <!-- Background Grid -->
+  <rect width="850" height="320" rx="16" fill="url(#grid)" />
+
+  <!-- Glowing Ambient Blobs -->
+  <circle cx="640" cy="160" r="140" fill="url(#purple-glow)" filter="url(#glow-filter)" />
+  <circle cx="200" cy="100" r="100" fill="url(#cyan-glow)" filter="url(#glow-filter)" />
+
+  <!-- LEFT SIDE: Content & Branding -->
+
+  <!-- Pill Badge: Stellar Ecosystem -->
+  <g transform="translate(48, 44)">
+    <rect width="180" height="26" rx="13" fill="#0F172A" stroke="#0284C7" stroke-opacity="0.4" stroke-width="1" />
+    <circle cx="15" cy="13" r="4" fill="#38BDF8" />
+    <text x="28" y="17" class="tag-text">STELLAR MULTISIG</text>
+  </g>
+
+  <!-- Title -->
+  <text x="48" y="108" class="title" fill="#FFFFFF">Stellar Multisig</text>
+  <text x="48" y="148" class="title" fill="url(#primary-grad)">Coordinator</text>
+
+  <!-- Subtitle -->
+  <text x="48" y="184" class="subtitle">Lightweight, non-custodial web frontend for proposing</text>
+  <text x="48" y="204" class="subtitle">and signing multi-signature Stellar transactions.</text>
+
+  <!-- Feature Chips / Badges -->
+  <!-- Chip 1: Propose & Sign -->
+  <g transform="translate(48, 238)">
+    <rect width="128" height="32" rx="8" fill="url(#card-grad)" stroke="#334155" stroke-width="1" />
+    <!-- Link/Share Icon -->
+    <path d="M12 18L18 12M15 11L18.5 7.5C19.3 6.7 20.6 6.7 21.4 7.5C22.2 8.3 22.2 9.6 21.4 10.4L18 13.8M13.8 18L10.4 21.4C9.6 22.2 8.3 22.2 7.5 21.4C6.7 20.6 6.7 19.3 7.5 18.5L11 15" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round" fill="none" transform="translate(2, 2) scale(0.7)" />
+    <text x="32" y="20" class="badge-text">Propose &amp; Sign</text>
+  </g>
+
+  <!-- Chip 2: Zero Private Keys -->
+  <g transform="translate(186, 238)">
+    <rect width="150" height="32" rx="8" fill="url(#card-grad)" stroke="#334155" stroke-width="1" />
+    <!-- Lock Icon -->
+    <path d="M12 15V17M6 10V20C6 20.5 6.5 21 7 21H17C17.5 21 18 20.5 18 20V10C18 9.5 17.5 9 17 9H7C6.5 9 6 9.5 6 10ZM9 9V6C9 4.3 10.3 3 12 3C13.7 3 15 4.3 15 6V9" stroke="#A78BFA" stroke-width="1.5" stroke-linecap="round" fill="none" transform="translate(2, 2) scale(0.7)" />
+    <text x="32" y="20" class="badge-text">Freighter Wallet</text>
+  </g>
+
+  <!-- Chip 3: Pure Client-Side -->
+  <g transform="translate(346, 238)">
+    <rect width="128" height="32" rx="8" fill="url(#card-grad)" stroke="#334155" stroke-width="1" />
+    <!-- Shield/Check Icon -->
+    <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="#34D399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(2, 2) scale(0.7)" />
+    <text x="32" y="20" class="badge-text">Client-Side</text>
+  </g>
+
+
+  <!-- RIGHT SIDE: Multi-Signature Diagram / Visual Metaphor -->
+
+  <g transform="translate(620, 160)">
+
+    <!-- Connection Lines to Central Hub -->
+    <!-- Line to Top Signer (Signer A - Completed) -->
+    <line x1="0" y1="0" x2="0" y2="-85" stroke="#38BDF8" stroke-width="2" stroke-dasharray="4 4" opacity="0.8" />
+    <!-- Line to Bottom Left (Signer B - Completed) -->
+    <line x1="0" y1="0" x2="-80" y2="60" stroke="#818CF8" stroke-width="2" stroke-dasharray="4 4" opacity="0.8" />
+    <!-- Line to Bottom Right (Signer C - Pending) -->
+    <line x1="0" y1="0" x2="80" y2="60" stroke="#475569" stroke-width="2" stroke-dasharray="4 4" opacity="0.6" />
+
+    <!-- Pulsing active signal dots along completed lines -->
+    <circle cx="0" cy="-42" r="3" fill="#38BDF8" filter="url(#subtle-glow)" />
+    <circle cx="-40" cy="30" r="3" fill="#818CF8" filter="url(#subtle-glow)" />
+
+    <!-- CENTER HUB: Multisig Transaction Core -->
+    <circle cx="0" cy="0" r="48" fill="#0F172A" stroke="url(#primary-grad)" stroke-width="2.5" filter="url(#subtle-glow)" />
+    <circle cx="0" cy="0" r="40" fill="#1E293B" opacity="0.9" />
+
+    <!-- Transaction Icon + Threshold Status inside Hub -->
+    <path d="M-10 -8 H10 M-10 -1 H10 M-10 6 H4" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" />
+    <!-- Threshold Badge inside center -->
+    <rect x="-18" y="10" width="36" height="16" rx="8" fill="#0284C7" />
+    <text x="0" y="22" text-anchor="middle" class="node-text" fill="#FFFFFF">2 / 2</text>
+
+
+    <!-- SIGNER NODE 1 (Top: Proposer / Signer A) -->
+    <g transform="translate(0, -85)">
+      <circle cx="0" cy="0" r="22" fill="#0F172A" stroke="#38BDF8" stroke-width="2" />
+      <!-- User/Key Icon -->
+      <circle cx="0" cy="-4" r="5" fill="none" stroke="#38BDF8" stroke-width="1.5" />
+      <path d="M-8 8 C-8 3, 8 3, 8 8" fill="none" stroke="#38BDF8" stroke-width="1.5" />
+      <!-- Checkmark Badge -->
+      <circle cx="14" cy="-12" r="8" fill="#10B981" />
+      <path d="M11 -12 L13 -10 L17 -14" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+      <!-- Label -->
+      <rect x="-35" y="26" width="70" height="18" rx="4" fill="#1E293B" opacity="0.8" />
+      <text x="0" y="38" text-anchor="middle" class="node-text" fill="#38BDF8">Signer A</text>
+    </g>
+
+    <!-- SIGNER NODE 2 (Bottom Left: Signer B) -->
+    <g transform="translate(-80, 60)">
+      <circle cx="0" cy="0" r="22" fill="#0F172A" stroke="#818CF8" stroke-width="2" />
+      <!-- User/Key Icon -->
+      <circle cx="0" cy="-4" r="5" fill="none" stroke="#818CF8" stroke-width="1.5" />
+      <path d="M-8 8 C-8 3, 8 3, 8 8" fill="none" stroke="#818CF8" stroke-width="1.5" />
+      <!-- Checkmark Badge -->
+      <circle cx="14" cy="-12" r="8" fill="#10B981" />
+      <path d="M11 -12 L13 -10 L17 -14" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+      <!-- Label -->
+      <rect x="-35" y="26" width="70" height="18" rx="4" fill="#1E293B" opacity="0.8" />
+      <text x="0" y="38" text-anchor="middle" class="node-text" fill="#818CF8">Signer B</text>
+    </g>
+
+    <!-- SIGNER NODE 3 (Bottom Right: Pending / Optional Signer) -->
+    <g transform="translate(80, 60)">
+      <circle cx="0" cy="0" r="22" fill="#0F172A" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3" />
+      <!-- User/Key Icon (Gray/Pending) -->
+      <circle cx="0" cy="-4" r="5" fill="none" stroke="#64748B" stroke-width="1.5" />
+      <path d="M-8 8 C-8 3, 8 3, 8 8" fill="none" stroke="#64748B" stroke-width="1.5" />
+      <!-- Pending Clock Badge -->
+      <circle cx="14" cy="-12" r="8" fill="#334155" />
+      <path d="M14 -15 V-12 H16" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round" fill="none" />
+      <!-- Label -->
+      <rect x="-35" y="26" width="70" height="18" rx="4" fill="#1E293B" opacity="0.8" />
+      <text x="0" y="38" text-anchor="middle" class="node-text" fill="#64748B">Optional</text>
+    </g>
+
+  </g>
+
+</svg>
