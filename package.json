@@ -2,6 +2,7 @@
   "name": "@stellarcosigner/coordinator-web",
   "private": true,
   "version": "0.1.0",
+  "license": "Apache-2.0",
   "type": "module",
   "description": "Frontend for a self-hosted Stellar multisig transaction coordinator. Propose a transaction, share an unguessable link, and let signers approve it with their own wallets. Never touches private keys.",
   "engines": {
