@@ -1,5 +1,8 @@
 # Stellar Multisig Coordinator — Web
 
+[![CI](https://github.com/stellarcosigner/coordinator-web/actions/workflows/ci.yml/badge.svg)](https://github.com/stellarcosigner/coordinator-web/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
 Frontend for a self-hosted **Stellar multisig coordinator**. This app does two
 things, and nothing more:
 
