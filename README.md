@@ -16,7 +16,7 @@ the full threat model.
 
 It is a **pure client-side** app (Vite + React + TypeScript) — no server, no
 build-time secrets, deployable to any static host. It consumes the
-[stellarquorum/coordinator-api](https://github.com/stellarquorum/coordinator-api)
+[stellarcosigner/coordinator-api](https://github.com/stellarcosigner/coordinator-api)
 backend.
 
 ---
@@ -48,7 +48,9 @@ return raw XDR from `GET /requests/:id` (see
 1. The page fetches `GET /requests/:id` and renders the API-decoded summary in
    plain language ("Pay 10.5 XLM to G…"), never raw XDR.
 2. It shows the live signature state: who has signed, who hasn't, weight
-   accumulated vs. the account's real on-chain threshold.
+   accumulated vs. the account's real on-chain threshold. The page does not
+   auto-refresh: a signer must click **Refresh status** to see updates from
+   other signers. This is expected behavior, not a bug.
 3. **Connect Wallet** (Freighter), then **Sign**. Freighter shows its own
    confirmation; the app extracts the wallet's detached signature, POSTs it to
    `POST /requests/:id/sign`, and refreshes the status.
@@ -109,6 +111,11 @@ request.
 The API must be configured to allow this frontend's origin: set the API's
 `CORS_ORIGIN` environment variable to your frontend's origin (comma-separated
 for several). See the API's README.
+
+If the coordinator-api is deployed on a free tier that spins down when idle
+(for example Render's free web service), the first request after idle time can
+take 30-60 seconds to respond. That is expected, not a broken deployment. See
+the API's README for its deployment details.
 
 ## Development
 
@@ -208,5 +215,5 @@ decoder.
 
 ## Related
 
-- [stellarquorum/coordinator-api](https://github.com/stellarquorum/coordinator-api) — the backend this app talks to (routes, security model, README).
+- [stellarcosigner/coordinator-api](https://github.com/stellarcosigner/coordinator-api) — the backend this app talks to (routes, security model, README).
 - [Freighter developer docs](https://docs.freighter.app/) — the wallet integration this app uses.
