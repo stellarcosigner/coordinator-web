@@ -1,7 +1,7 @@
 /**
  * Typed client for the Stellar multisig coordinator-api.
  *
- * Mirrors the contract implemented by the sibling repo (stellarquorum/
+ * Mirrors the contract implemented by the sibling repo (stellarcosigner/
  * coordinator-api): POST /requests, GET /requests/:id, POST /requests/:id/sign.
  * Errors are `{ error: string }` with an HTTP status; this client normalizes
  * them into `ApiError` so callers can react to 404 / 403 / 409 specifically.
