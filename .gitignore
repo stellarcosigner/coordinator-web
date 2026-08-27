@@ -10,6 +10,9 @@ coverage/
 .env.*
 !.env.example
 
+# Local throwaway testing scripts, never committed
+scripts/
+
 # Logs
 *.log
 npm-debug.log*
