@@ -1,7 +1,7 @@
 # Security
 
 This frontend is a thin, static client for the
-[stellarquorum/coordinator-api](https://github.com/stellarquorum/coordinator-api).
+[stellarcosigner/coordinator-api](https://github.com/stellarcosigner/coordinator-api).
 Most of the security properties live in that service (see its README and
 SECURITY.md). This document covers what this app must hold, and what it must
 never do.
@@ -63,9 +63,8 @@ security-critical ones.
 
 ## Reporting a vulnerability
 
-This project is early-stage and self-hosted. For now, report issues privately
-to the repository maintainers (email the address in the git configuration)
-with:
+This project is early-stage and self-hosted. Please report security issues
+privately to the maintainers — do **not** open a public issue. Include:
 
 - The affected surface (page, endpoint, or library function).
 - A minimal reproduction.

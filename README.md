@@ -7,14 +7,21 @@
 [![CI](https://github.com/stellarcosigner/coordinator-web/actions/workflows/ci.yml/badge.svg)](https://github.com/stellarcosigner/coordinator-web/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-## Maintainers
+Frontend for a self-hosted **Stellar multisig coordinator**: propose a
+transaction, share an unguessable link, and let signers approve it with their
+own wallets. This app never touches private keys.
 
-| Name | GitHub |
-|---|---|
-| Hollujay | [@Hollujay](https://github.com/Hollujay) |
+## Live app
 
-Frontend for a self-hosted **Stellar multisig coordinator**. This app does two
-things, and nothing more:
+There is no verified public deployment of this frontend yet. The app is a
+static site (see [Deployment](#deployment-static-hosts)) meant to be deployed
+to a static host and pointed at your own `coordinator-api` instance;
+`npm run dev` starts a local development server at `http://localhost:5173`,
+which is a dev environment, not a live deployment.
+
+## What it does
+
+This app does two things, and nothing more:
 
 1. **Propose** — a user pastes a pre-built Stellar transaction, the app posts
    it to the coordinator-api, and the proposer gets an unguessable link to
@@ -24,25 +31,24 @@ things, and nothing more:
 
 This app **never handles private keys**. All signing happens inside the
 connected wallet extension; the only thing this app ever sends to the API is a
-detached signature produced by the wallet. See [SECURITY.md](SECURITY.md) for
-the full threat model.
+detached signature produced by the wallet.
 
 It is a **pure client-side** app (Vite + React + TypeScript) — no server, no
 build-time secrets, deployable to any static host. It consumes the
 [stellarcosigner/coordinator-api](https://github.com/stellarcosigner/coordinator-api)
 backend.
 
----
-
-## The two flows
+## User flows
 
 ### Propose (`/`)
 
 1. Build the transaction in the tool of your choice (Stellar Laboratory, the
    SDK, a CLI) and copy its **envelope XDR**.
-2. Paste it here, pick the network, review the plain-language preview, submit.
-3. The app shows a **shareable link** with a copy button — it does not
-   navigate away, because copying that link is the whole point.
+2. Paste it here, pick the network, review the plain-language preview
+   (decoded client-side), submit.
+3. The API creates the coordination request and the app shows a **shareable
+   link** with a copy button — it does not navigate away, because copying
+   that link is the whole point.
 
 The shareable link looks like:
 
@@ -58,25 +64,99 @@ return raw XDR from `GET /requests/:id` (see
 
 ### Sign (`/requests/:id`)
 
-1. The page fetches `GET /requests/:id` and renders the API-decoded summary in
-   plain language ("Pay 10.5 XLM to G…"), never raw XDR.
-2. It shows the live signature state: who has signed, who hasn't, weight
-   accumulated vs. the account's real on-chain threshold. The page does not
-   auto-refresh: a signer must click **Refresh status** to see updates from
-   other signers. This is expected behavior, not a bug.
-3. **Connect Wallet** (Freighter), then **Sign**. Freighter shows its own
-   confirmation; the app extracts the wallet's detached signature, POSTs it to
-   `POST /requests/:id/sign`, and refreshes the status.
-4. If the threshold was just met, the API submits to the network and the app
-   shows **“Threshold met. Transaction submitted to the network.”** with a
-   block-explorer link.
+1. The signer opens the request; the page fetches `GET /requests/:id` and
+   renders the API-decoded summary in plain language ("Pay 10.5 XLM to G…"),
+   never raw XDR.
+2. It shows the **live signature/threshold state** from the API: who has
+   signed, who hasn't, weight accumulated vs. the account's real on-chain
+   threshold. The page does not auto-refresh: a signer must click **Refresh
+   status** to see updates from other signers. This is expected behavior, not
+   a bug.
+3. **Connect Wallet** (Freighter), then **Sign**. Freighter handles the
+   signing and shows its own confirmation; the app extracts the wallet's
+   detached signature and POSTs it to `POST /requests/:id/sign`.
+4. Submission is shown **only after the API confirms it**: if the threshold
+   was just met, the API submits to the network and the app displays
+   "Threshold met. Transaction submitted to the network." with a
+   block-explorer link. The app never claims submission on its own.
 
 If the request doesn't exist or has expired, the page says exactly that —
-“this request doesn't exist or has expired” — never a generic error.
+"this request doesn't exist or has expired" — never a generic error.
 
----
+## Security model
 
-## MVP scope decision (documented)
+- **Private keys never reach this app.** All signing happens inside Freighter
+  (`src/lib/wallet.ts`); the only wallet interaction is asking for a public
+  key and a signature over the exact envelope the signer reviewed.
+- **No transaction or signature data is persisted client-side.** No
+  `localStorage`/`sessionStorage` of XDR, signatures, or public keys. The
+  transaction payload travels only in the URL fragment (`#tx=…`), which is
+  never sent to a server.
+- **Request links are bearer-style secrets.** Anyone holding a full shareable
+  link (id + fragment) can review, and if a signer, sign, that request. Treat
+  links as sensitive — this is inherent to the coordinator model.
+- **Signer/threshold state always comes from the API**, which resolves it
+  live from the network — this app never trusts or fabricates that state
+  itself.
+- **The UI never claims submission the API hasn't confirmed.** The success
+  banner only appears after `POST /requests/:id/sign` returns
+  `status: submitted`.
+- **Unsummarizable operations are surfaced, never hidden.** If any part of an
+  XDR can't be decoded into confident plain language (for example Soroban
+  `invokeHostFunction` calls), the UI says so explicitly instead of showing a
+  partial or guessed description.
+
+See [SECURITY.md](SECURITY.md) for the complete threat model.
+
+## How the web app and API work together
+
+Proposer flow:
+
+```text
+proposer browser
+        │
+        ▼
+   coordinator-web
+        │
+        │ HTTPS / JSON
+        ▼
+  coordinator-api ──► Stellar Network (Horizon: resolve signer list/threshold)
+        │
+        ▼
+   PostgreSQL (store pending request)
+```
+
+Signer flow:
+
+```text
+signer browser
+        │
+        ├── wallet / Freighter (signing happens here — keys never leave it)
+        │
+        ▼
+   coordinator-web
+        │
+        │ HTTPS / JSON
+        ▼
+  coordinator-api ──► Stellar Network (Horizon: verify signer, submit once threshold met)
+        │
+        ▼
+   PostgreSQL (record signature)
+```
+
+- **coordinator-web** is a static, client-only app: it decodes XDR for
+  preview, calls the API, and hands signatures to/from Freighter. It holds no
+  server-side state of its own and never talks to PostgreSQL or Horizon
+  directly.
+- **coordinator-api** ([repo](https://github.com/stellarcosigner/coordinator-api))
+  stores requests, resolves signer/threshold state live from Horizon, and
+  submits once the threshold is met.
+- The two decode transactions **identically**: the API decodes for
+  `GET /requests/:id`; this app's `src/lib/txSummary.ts` mirrors that decoder
+  for the Propose-page preview and for tests (see
+  [Design decisions](#design-decisions)).
+
+## MVP scope
 
 **Pasting a pre-built XDR is the MVP — there is deliberately no
 transaction-construction UI.** Building a full field-by-field transaction
@@ -89,8 +169,6 @@ envelope XDR this app expects.
 The summary preview on the Propose page decodes the pasted XDR client-side, so
 the proposer sees exactly what they're about to share before creating the
 request.
-
----
 
 ## Design decisions
 
@@ -106,14 +184,12 @@ request.
   word-for-word identical (see the sibling repo's `src/summary.ts`).
 - **Unsummarizable operations are called out, never hidden.** Soroban
   `invokeHostFunction` operations (and anything unrecognized) render an
-  explicit warning — “this app cannot fully summarize — review the raw XDR
-  before signing” — instead of a silently partial description.
+  explicit warning — "this app cannot fully summarize — review the raw XDR
+  before signing" — instead of a silently partial description.
 - **No signed data is stored client-side.** No localStorage/sessionStorage of
   transaction payloads, signatures, or keys. The wallet answers from its own
   allow-list; the page re-connects silently if the user previously authorized
   this origin.
-
----
 
 ## Configuration
 
@@ -144,13 +220,12 @@ npm run preview      # serve the production build locally
 
 `node >= 22` is required (matches the API).
 
----
-
 ## Deployment (static hosts)
 
 The app is a static site; `npm run build` emits `dist/`. Every static host
 needs one extra rule so the client-side routes (`/requests/<id>`) work on a
-hard refresh or direct link:
+hard refresh or direct link. These are deployment *instructions* — no branch
+of this project deploys automatically to any of these hosts.
 
 ### Vercel
 
@@ -191,9 +266,7 @@ npm run build
 npx gh-pages -d dist        # or any Pages workflow that publishes dist/
 ```
 
----
-
-## Project layout
+## Project structure
 
 ```
 src/
@@ -226,13 +299,31 @@ plain-language sentences a signer will read. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for how to add coverage when you touch the
 decoder.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for ground rules, the development loop,
+and how the XDR decoder must stay in sync with the API's.
+
+## Community
+
+There is no dedicated community channel for this project yet. Use
+[GitHub Issues](https://github.com/stellarcosigner/coordinator-web/issues) for
+bug reports, questions, and feature discussion.
+
+## Maintainers
+
+| Name | GitHub |
+|---|---|
+| Hollujay | [@Hollujay](https://github.com/Hollujay) |
+| ZeePearl56 | [@ZeePearl56](https://github.com/ZeePearl56) |
+
 ## Contributors
 
 <a href="https://github.com/stellarcosigner/coordinator-web/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=stellarcosigner/coordinator-web" />
 </a>
 
-## Related
+## Related projects
 
 - [stellarcosigner/coordinator-api](https://github.com/stellarcosigner/coordinator-api) — the backend this app talks to (routes, security model, README).
 - [Freighter developer docs](https://docs.freighter.app/) — the wallet integration this app uses.
