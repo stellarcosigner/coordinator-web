@@ -57,6 +57,8 @@ export interface MultisigRequest {
   createdAt: string;
   expiresAt: string;
   submittedAt: string | null;
+  /** The actual on-chain hash once submitted, resolved by the API; null until then. */
+  submissionHash: string | null;
   summary: TransactionSummary;
   signatureState: SignatureState;
 }

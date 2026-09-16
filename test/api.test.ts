@@ -68,39 +68,40 @@ describe('createRequest', () => {
   });
 });
 
-describe('getRequest', () => {
-  const requestPayload = {
-    id: '0123456789abcdef0123456789abcdef',
-    sourceAccount: 'GABC',
-    network: 'testnet',
-    status: 'pending',
-    createdAt: '2026-08-03T12:00:00Z',
-    expiresAt: '2026-08-10T12:00:00Z',
-    submittedAt: null,
-    summary: {
-      source: 'GABC',
-      fee: '100',
-      sequence: '123',
-      memo: null,
-      timeBounds: null,
-      operations: [
-        {
-          type: 'payment',
-          description: 'Pay 10.0000000 XLM to GXYZ',
-          details: { destination: 'GXYZ', amount: '10.0000000', asset: 'XLM' },
-        },
-      ],
-      signaturesAttachedToEnvelope: 0,
-    },
-    signatureState: {
-      accountStatus: 'ok',
-      threshold: 2,
-      signedWeight: 1,
-      thresholdMet: false,
-      signers: [{ key: 'GABC', weight: 1, signed: true, signedAt: '2026-08-03T12:00:00Z' }],
-    },
-  };
+const requestPayload = {
+  id: '0123456789abcdef0123456789abcdef',
+  sourceAccount: 'GABC',
+  network: 'testnet',
+  status: 'pending',
+  createdAt: '2026-08-03T12:00:00Z',
+  expiresAt: '2026-08-10T12:00:00Z',
+  submittedAt: null,
+  submissionHash: null,
+  summary: {
+    source: 'GABC',
+    fee: '100',
+    sequence: '123',
+    memo: null,
+    timeBounds: null,
+    operations: [
+      {
+        type: 'payment',
+        description: 'Pay 10.0000000 XLM to GXYZ',
+        details: { destination: 'GXYZ', amount: '10.0000000', asset: 'XLM' },
+      },
+    ],
+    signaturesAttachedToEnvelope: 0,
+  },
+  signatureState: {
+    accountStatus: 'ok',
+    threshold: 2,
+    signedWeight: 1,
+    thresholdMet: false,
+    signers: [{ key: 'GABC', weight: 1, signed: true, signedAt: '2026-08-03T12:00:00Z' }],
+  },
+};
 
+describe('getRequest', () => {
   it('fetches and parses a request', async () => {
     stubFetch(200, requestPayload);
 
@@ -169,5 +170,57 @@ describe('submitSignature', () => {
       signerPublicKey: 'GABC',
       signature: 'aGFzaGVk',
     });
+  });
+
+  it('does not itself return a submission hash — the app must get it from a subsequent getRequest', async () => {
+    stubFetch(200, { status: 'submitted' });
+
+    const result = await submitSignature('0123456789abcdef0123456789abcdef', {
+      signerPublicKey: 'GABC',
+      signature: 'aGFzaGVk',
+    });
+
+    // Only { status } is ever returned by this endpoint. There is no hash
+    // here for the UI to read, fabricate from, or fall back to — the actual
+    // submission hash is exclusively a getRequest/submissionHash concern.
+    expect(Object.keys(result)).toEqual(['status']);
+  });
+});
+
+describe('getRequest — submissionHash contract', () => {
+  it('exposes the API-provided submissionHash for a submitted request', async () => {
+    stubFetch(200, {
+      ...requestPayload,
+      status: 'submitted',
+      submittedAt: '2026-08-03T12:05:00Z',
+      submissionHash: 'deadbeef'.repeat(8),
+    });
+
+    const request = await getRequest('0123456789abcdef0123456789abcdef');
+
+    expect(request.status).toBe('submitted');
+    // This is the real on-chain hash coming from the API alone — a viewer
+    // with no #tx= fragment (a bare link, another device, another browser)
+    // receives the exact same value, since nothing here depends on any
+    // locally-held transaction payload.
+    expect(request.submissionHash).toBe('deadbeef'.repeat(8));
+  });
+
+  it('surfaces submissionHash: null as-is when the API has not recorded one yet, rather than coercing or omitting it', async () => {
+    stubFetch(200, { ...requestPayload, status: 'submitted', submittedAt: '2026-08-03T12:05:00Z', submissionHash: null });
+
+    const request = await getRequest('0123456789abcdef0123456789abcdef');
+
+    expect(request.status).toBe('submitted');
+    expect(request.submissionHash).toBeNull();
+  });
+
+  it('parses submissionHash: null for a pending (never-submitted) request', async () => {
+    stubFetch(200, requestPayload);
+
+    const request = await getRequest('0123456789abcdef0123456789abcdef');
+
+    expect(request.status).toBe('pending');
+    expect(request.submissionHash).toBeNull();
   });
 });

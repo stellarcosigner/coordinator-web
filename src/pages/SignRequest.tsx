@@ -8,7 +8,6 @@ import {
 } from '../lib/api';
 import type { MultisigRequest } from '../lib/api';
 import { wallet, WalletError } from '../lib/wallet';
-import { parseEnvelope } from '../lib/txSummary';
 import { networkPassphrase, blockExplorerTxUrl } from '../lib/networks';
 import { formatDate, shortenAddress } from '../lib/format';
 import TransactionSummary from '../components/TransactionSummary';
@@ -26,7 +25,7 @@ type SignState =
   | { kind: 'connected'; publicKey: string }
   | { kind: 'signing' }
   | { kind: 'signed' }
-  | { kind: 'submitted'; txHash: string }
+  | { kind: 'submitted' }
   | { kind: 'error'; message: string };
 
 /** The transaction payload travels in the URL fragment so the coordinator-api
@@ -94,17 +93,6 @@ export default function SignRequest() {
 
   const request = load.kind === 'loaded' ? load.request : null;
 
-  const txHashFromFragment = useMemo(() => {
-    if (!request || !fragmentXdr) return null;
-    try {
-      return parseEnvelope(fragmentXdr, request.network)
-        .hash()
-        .toString('hex');
-    } catch {
-      return null;
-    }
-  }, [request, fragmentXdr]);
-
   async function connectWallet() {
     setSignError(null);
     setNetworkMismatch(false);
@@ -139,17 +127,19 @@ export default function SignRequest() {
     setSign({ kind: 'signing' });
     try {
       const passphrase = networkPassphrase(request.network);
-      const { signerPublicKey, signature, signedXdr } = await wallet.signTransactionDetached(
-        fragmentXdr,
-        { networkPassphrase: passphrase },
-      );
+      const { signerPublicKey, signature } = await wallet.signTransactionDetached(fragmentXdr, {
+        networkPassphrase: passphrase,
+      });
 
       const result = await submitSignature(request.id, { signerPublicKey, signature });
 
       if (result.status === 'submitted') {
-        const hash = parseEnvelope(signedXdr, request.network).hash().toString('hex');
-        setSign({ kind: 'submitted', txHash: hash });
-        setLoad({ kind: 'loaded', request: { ...request, status: 'submitted' } });
+        setSign({ kind: 'submitted' });
+        // The API is the source of truth for the actual submitted transaction
+        // hash (submissionHash) — fetch it rather than deriving one locally,
+        // so the hash shown is correct for any viewer, with or without the
+        // original #tx= fragment.
+        await silentRefresh();
       } else {
         setSign({ kind: 'signed' });
         // Refresh the live signer list to show the new signature.
@@ -230,9 +220,7 @@ export default function SignRequest() {
     throw new Error('invariant: request must be loaded here');
   }
 
-  const { status, network, summary, signatureState } = request;
-  const submittedTxHash =
-    sign.kind === 'submitted' ? sign.txHash : txHashFromFragment;
+  const { status, network, summary, signatureState, submissionHash } = request;
   const connectedKey = sign.kind === 'connected' ? sign.publicKey : null;
   const connectedIsSigner = connectedKey
     ? signatureState.signers.some((signer) => signer.key === connectedKey)
@@ -260,20 +248,20 @@ export default function SignRequest() {
       {status === 'submitted' && (
         <div className="alert alert-success" role="alert">
           <strong>Threshold met. Transaction submitted to the network.</strong>{' '}
-          {submittedTxHash ? (
+          {submissionHash ? (
             <>
               View it on the block explorer:{' '}
               <a
-                href={blockExplorerTxUrl(network, submittedTxHash)}
+                href={blockExplorerTxUrl(network, submissionHash)}
                 target="_blank"
                 rel="noreferrer"
               >
-                {shortenAddress(submittedTxHash, 8, 8)}
+                {shortenAddress(submissionHash, 8, 8)}
               </a>
               .
             </>
           ) : (
-            'The transaction hash is not available from this link.'
+            'The submission hash is not available yet.'
           )}
         </div>
       )}
