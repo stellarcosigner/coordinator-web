@@ -8,7 +8,7 @@ import {
 } from '../lib/api';
 import type { MultisigRequest } from '../lib/api';
 import { wallet, WalletError } from '../lib/wallet';
-import { networkPassphrase, blockExplorerTxUrl } from '../lib/networks';
+import { networkPassphrase, networkLabelForPassphrase, checkWalletNetwork, blockExplorerTxUrl } from '../lib/networks';
 import { formatDate, shortenAddress } from '../lib/format';
 import TransactionSummary from '../components/TransactionSummary';
 import SignerStatus from '../components/SignerStatus';
@@ -41,7 +41,10 @@ export default function SignRequest() {
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' });
   const [sign, setSign] = useState<SignState>({ kind: 'idle' });
   const [signError, setSignError] = useState<string | null>(null);
-  const [networkMismatch, setNetworkMismatch] = useState(false);
+  // The wallet's network label (e.g. "Mainnet") when it is known to differ
+  // from the request's network; null whenever there is no known mismatch
+  // (networks match, or the wallet's network could not be determined).
+  const [walletNetworkWarning, setWalletNetworkWarning] = useState<string | null>(null);
 
   const fragmentXdr = useMemo(readFragmentXdr, [id]);
 
@@ -77,14 +80,35 @@ export default function SignRequest() {
     void refresh();
   }, [refresh]);
 
+  // Checks the wallet's currently reported network against the request's
+  // network and updates the warning state accordingly. Shared by every path
+  // that can end with a connected wallet (explicit connect and silent
+  // session restore) so the warning is never skipped depending on how the
+  // wallet got connected. Never fabricates a mismatch: any lookup failure or
+  // an undetermined network clears the warning rather than guessing.
+  async function syncWalletNetworkWarning(transactionNetwork: MultisigRequest['network']) {
+    let passphrase: string | null;
+    try {
+      passphrase = await wallet.getNetworkPassphrase();
+    } catch {
+      passphrase = null;
+    }
+    const result = checkWalletNetwork(passphrase, transactionNetwork);
+    setWalletNetworkWarning(result.kind === 'mismatch' ? result.walletNetworkLabel : null);
+  }
+
   // Restore a previous session's connection silently (no stored data — the
   // wallet answers from its own allow-list).
   useEffect(() => {
     if (load.kind !== 'loaded') return;
+    const loadedRequest = load.request;
     void wallet
       .getConnectedPublicKey()
       .then((publicKey) => {
-        if (publicKey) setSign({ kind: 'connected', publicKey });
+        if (publicKey) {
+          setSign({ kind: 'connected', publicKey });
+          void syncWalletNetworkWarning(loadedRequest.network);
+        }
       })
       .catch(() => {
         /* leave the user to connect explicitly */
@@ -95,7 +119,7 @@ export default function SignRequest() {
 
   async function connectWallet() {
     setSignError(null);
-    setNetworkMismatch(false);
+    setWalletNetworkWarning(null);
     setSign({ kind: 'connecting' });
     try {
       const { publicKey } = await wallet.connect();
@@ -104,14 +128,7 @@ export default function SignRequest() {
       // know which account is connected.
       void silentRefresh();
       if (request) {
-        try {
-          const passphrase = await wallet.getNetworkPassphrase();
-          if (passphrase && passphrase !== networkPassphrase(request.network)) {
-            setNetworkMismatch(true);
-          }
-        } catch {
-          /* network check is best-effort */
-        }
+        void syncWalletNetworkWarning(request.network);
       }
     } catch (error) {
       setSign({
@@ -294,11 +311,11 @@ export default function SignRequest() {
             </div>
           )}
 
-          {networkMismatch && (
+          {walletNetworkWarning && (
             <div className="alert alert-warning" role="alert">
-              Your wallet is configured for a different network than this
-              request ({network}). Freighter will ask you to confirm — only
-              sign if you are sure this is the right request.
+              Your wallet is connected to <strong>{walletNetworkWarning}</strong>,
+              but this request is for <strong>{networkLabelForPassphrase(networkPassphrase(network))}</strong>.
+              Switch your wallet to the matching network before signing.
             </div>
           )}
 
