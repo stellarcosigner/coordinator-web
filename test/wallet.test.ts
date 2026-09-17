@@ -95,6 +95,30 @@ describe('getConnectedPublicKey', () => {
   });
 });
 
+describe('getNetworkPassphrase', () => {
+  it('returns the passphrase Freighter reports', async () => {
+    mocked.getNetwork.mockResolvedValue({ network: 'TESTNET', networkPassphrase: Networks.TESTNET });
+
+    await expect(wallet.getNetworkPassphrase()).resolves.toBe(Networks.TESTNET);
+  });
+
+  it('returns null when Freighter is not installed', async () => {
+    mocked.isConnected.mockResolvedValue({ isConnected: false });
+
+    await expect(wallet.getNetworkPassphrase()).resolves.toBeNull();
+  });
+
+  it('returns null (never throws, never fabricates a passphrase) when Freighter reports an error', async () => {
+    mocked.getNetwork.mockResolvedValue({
+      network: '',
+      networkPassphrase: '',
+      error: { code: -1, message: 'Not authorized' },
+    });
+
+    await expect(wallet.getNetworkPassphrase()).resolves.toBeNull();
+  });
+});
+
 describe('signTransactionDetached', () => {
   it('throws WalletSignRejectedError when the user cancels signing', async () => {
     mocked.signTransaction.mockResolvedValue({
